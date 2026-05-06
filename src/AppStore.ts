@@ -1,20 +1,21 @@
 import { create } from 'zustand'
 
 interface AppInfo {
-  name: string;
-  path: string;
-  icon: string
+  [name: string]: {
+    path: string,
+    icn: string
+  }
 };
 
 interface AppInfoStore {
-  appInfos: AppInfo[],
-  setInformation: (infos: AppInfo[]) => void
+  appInfos: AppInfo,
+  setInformation: (infos: AppInfo) => void
 }
 
 
 const useAppStore = create<AppInfoStore>((set) => ({
-  appInfos: [],
-  setInformation: (infos: AppInfo[]) => set({appInfos: infos}),
+  appInfos: {},
+  setInformation: (infos: AppInfo) => set({appInfos: infos}),
 }))
 
 

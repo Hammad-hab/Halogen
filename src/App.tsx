@@ -1,68 +1,114 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import { useAppStore } from "./AppStore";
+import { AppInfo, useAppStore } from "./AppStore";
 import { Canvas } from "@react-three/fiber";
 import AppGrid from "./AppGrid";
 import "./App.css";
 import { SRGBColorSpace } from "three";
-// import { ScrollControls, Scroll } from "@react-three/drei";
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { homeDir } from '@tauri-apps/api/path';
-import { join } from '@tauri-apps/api/path';
-
-
-type AppInfo = {
-  name: string;
-  path: string;
-  icon: string;
-};
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { homeDir } from "@tauri-apps/api/path";
+import { join } from "@tauri-apps/api/path";
+import * as TOML from "js-toml";
 
 function App() {
   const apps = useAppStore();
-  const src = convertFileSrc("~/.icons/wallpaper.png")
+  const mainRef = useRef(null);
   const [wallpaperSrc, setWallpaperSrc] = useState("");
+  const [anim, setAnim] = useState("fade-in");
+  const fadeTimeout = useRef<number>(null);
+  const animLock = useRef(false);
+
+  function fadeOut(win: any) {
+    if (animLock.current) return;
+    animLock.current = true;
+
+    setAnim("fade-out");
+
+    if (fadeTimeout.current) clearTimeout(fadeTimeout.current);
+
+    fadeTimeout.current = setTimeout(() => {
+      win.hide();
+      animLock.current = false;
+    }, 250);
+  }
+
+  async function fadeIn(win: any) {
+    if (animLock.current) return;
+    animLock.current = true;
+
+    await win.show();
+
+    requestAnimationFrame(() => {
+      setAnim("fade-in");
+
+      setTimeout(() => {
+        animLock.current = false;
+      }, 250);
+    });
+  }
+
   useEffect(() => {
-    invoke<AppInfo[]>("list_apps").then((data) => {
-      data = data.filter(app => !app.name.includes('wallpaper'))
-      apps.setInformation(data);
+    const win = getCurrentWindow();
+
+    const unblur = win.listen("tauri://blur", () => {
+      fadeOut(win);
     });
 
-    (async () => {
-      const home = await homeDir();
-      const wallpaperPath = await join(home, '.icons', 'wallpaper.png');
-      const src = convertFileSrc(wallpaperPath);
-      setWallpaperSrc(src);
-    })();
+    const unhide = win.listen("fade-out", () => {
+      fadeOut(win);
+    });
 
-    // Add keyboard listener
-    const handleKeyDown = (event: KeyboardEvent) => {
-      console.log("Key pressed:", event.key);
-      if (event.key === 'Escape') {
-        console.log("Escape pressed, closing window");
-        getCurrentWindow().close();
-      }
-    };
+    const unshow = win.listen("fade-in", () => {
+      fadeIn(win);
+    });
 
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      unblur.then((f) => f());
+      unhide.then((f) => f());
+      unshow.then((f) => f());
     };
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      const home = await homeDir();
+      const appListPath = await join(home, ".icons", "applist.toml");
+      invoke<string>("read_file", { path: appListPath }).then((data) => {
+        const t = TOML.load(data);
+        apps.setInformation(t as AppInfo);
+      });
+      // setWallpaperSrc();
+    })();
+
+    // invoke<AppInfo[]>("list_apps").then((data) => {
+    //   apps.setInformation(
+    //     data.filter((app) => !app.name.includes("wallpaper")),
+    //   );
+    // });
+
+    (async () => {
+      const home = await homeDir();
+      const wallpaperPath = await join(home, ".icons", "wallpaper.png");
+      setWallpaperSrc(convertFileSrc(wallpaperPath));
+    })();
+  }, []);
+
   return (
-    <main style={{
-      backgroundImage: `url(${wallpaperSrc})`,
-      backgroundSize: "cover",
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-    }}>
+    <main
+      ref={mainRef}
+      className={anim}
+      style={{
+        backgroundImage: `url(${wallpaperSrc})`,
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+    >
       <input placeholder="Search" id="search-bar" />
       <Canvas gl={{ outputColorSpace: SRGBColorSpace }}>
-       
-            <AppGrid />
-        
+        <Suspense>
+          <AppGrid />
+        </Suspense>
       </Canvas>
     </main>
   );

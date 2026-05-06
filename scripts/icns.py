@@ -10,6 +10,7 @@ class Application:
         self.name = None
         self.path = None
         self.icns = None
+        self.iconPath = None
     
     def convIcns(self):
         if not self.icns:
@@ -17,10 +18,13 @@ class Application:
 
         path = os.path.expanduser(Application.OUTDIR)
         os.makedirs(path, exist_ok=True)
-        img = Image.open(io.BytesIO(self.icns))
-
         safe_name = "".join(c for c in self.name if c.isalnum() or c in (' ', '-', '_')).strip()
-        img.save(f"{path}{safe_name}.png")
+        base = os.path.join(path, f"{safe_name}.png")
+        
+        if not os.path.exists(base):
+            img = Image.open(io.BytesIO(self.icns))
+            img.save(base)
+        self.iconPath = base
 
 def ignore(name: str):
     return name.startswith(".") or not name.endswith(".app")
@@ -68,6 +72,7 @@ def listApps():
                 continue
             
             app_name = fmtName(app)
+
             
             # Skip if we've already processed this app name
             if app_name in seen_names:
