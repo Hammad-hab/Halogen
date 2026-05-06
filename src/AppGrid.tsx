@@ -1,5 +1,5 @@
-import { AppInfo, useAppStore } from "./AppStore";
-import { OrbitControls, Text, useTexture } from "@react-three/drei";
+import { useAppStore } from "./hooks/AppStore";
+import { Text, useTexture } from "@react-three/drei";
 import { useMemo } from "react";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import * as THREE from "three";
