@@ -1,15 +1,15 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { CSSProperties, Suspense, useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Canvas } from "@react-three/fiber";
 import AppGrid from "./AppGrid";
 import "./App.css";
 import { SRGBColorSpace } from "three";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { homeDir } from "@tauri-apps/api/path";
 import { join } from "@tauri-apps/api/path";
 import { Files } from "./Files";
 import { useApplications } from "./hooks/useAppList";
-import useTauriWindowEvent from "./hooks/useTauriEvent";
+import {useTauriWindowEvent} from "./hooks/useTauriEvent";
+import { useAppSettings } from "./hooks/useAppSettings";
 
 function App() {
   const _ = useApplications();
@@ -18,6 +18,7 @@ function App() {
   const [anim, setAnim] = useState("fade-in");
   const fadeTimeout = useRef<number>(null);
   const animLock = useRef(false);
+  const { settings } = useAppSettings();
 
   function fadeOut(win: any) {
     if (animLock.current) return;
@@ -61,12 +62,16 @@ function App() {
   useEffect(() => {
     (async () => {
       const home = await homeDir();
-      const wallpaperPath = await join(
-        home,
-        Files.ICONSDIR,
-        Files.WALLPAPERFILE,
-      );
-      setWallpaperSrc(convertFileSrc(wallpaperPath));
+      if (!settings.appBg) {
+        const wallpaperPath = await join(
+          home,
+          Files.ICONSDIR,
+          Files.WALLPAPERFILE,
+        );
+        setWallpaperSrc(convertFileSrc(wallpaperPath));
+      } else {
+        setWallpaperSrc(convertFileSrc(settings.appBg));
+      }
     })();
   }, []);
 
@@ -79,13 +84,15 @@ function App() {
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
+        ...(settings.appOverrideStyle)
       }}
     >
       <div className="search-bar-container">
-        <input placeholder="Search" id="search-bar" />
+        <input placeholder={settings.searchBar.placeholder} id="search-bar" style={settings.searchBar.overrideStyle} />
       </div>
-      <Canvas gl={{ outputColorSpace: SRGBColorSpace }}>
-        <Suspense>
+      
+      <Canvas gl={{ outputColorSpace: SRGBColorSpace }} frameloop={settings.renderLoopMode}>
+        <Suspense fallback={null}>
           <AppGrid />
         </Suspense>
       </Canvas>

@@ -1,36 +1,46 @@
 import { useAppStore } from "./hooks/AppStore";
-import { Text, useTexture } from "@react-three/drei";
 import { useMemo } from "react";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import * as THREE from "three";
 import { ScrollControls, Scroll } from "@react-three/drei";
+
+import AppPlane from "./ui/AppPlane";
+import { useThree } from "@react-three/fiber";
+import { useAppSettings } from "./hooks/useAppSettings";
 
 
 const AppGrid = () => {
   const { appInfos } = useAppStore();
-
+  const { settings } = useAppSettings();
+  const { appGrid } = settings;
   const entries = useMemo(() => Object.entries(appInfos), [appInfos]);
+  const { viewport } = useThree();
 
   const gridConfig = useMemo(() => {
     const count = entries.length;
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
-    const spacing = 1.4;
+    const spacing = appGrid.spacing;
 
     return { cols, rows, spacing };
   }, [entries.length]);
 
+  const pages = useMemo(() => {
+    const spacing = gridConfig.spacing;
+    const contentHeight = (gridConfig.rows - 1) * spacing;
+  
+    // convert world height -> scroll pages
+    return Math.max(1.55, contentHeight / viewport.height);
+  }, [gridConfig.rows, gridConfig.spacing, viewport.height]);
+  
   return (
     <group>
-      <ScrollControls pages={2} damping={0.15}>
+      <ScrollControls pages={pages} damping={appGrid.scrollDamping}>
         <Scroll>
           {entries.map(([name, app], index) => {
             const col = index % gridConfig.cols;
             const row = Math.floor(index / gridConfig.cols);
 
-            const x = (col - (gridConfig.cols - 1) / 2) * gridConfig.spacing;
-            const y =
-              -4 + ((gridConfig.rows - 1) / 2 - row) * gridConfig.spacing;
+            const x = appGrid.xOffset + (col - (gridConfig.cols - 1) / 2) * gridConfig.spacing;
+            const y = appGrid.yOffset + ((gridConfig.rows - 1) / 2 - row) * gridConfig.spacing;
 
             return (
               <AppPlane
@@ -47,37 +57,5 @@ const AppGrid = () => {
   );
 };
 
-const AppPlane = ({
-  name,
-  app,
-  position,
-}: {
-  name: string;
-  app: { path: string; icn: string };
-  position: [number, number, number];
-}) => {
-  const src = convertFileSrc(app.icn);
-  const texture = useTexture(src);
-  texture.colorSpace = THREE.SRGBColorSpace;
 
-  return (
-    <group
-      position={position}
-      onPointerOver={() => (document.body.style.cursor = "pointer")}
-      onPointerOut={() => (document.body.style.cursor = "auto")}
-      onClick={() => {
-        invoke("open_app", { path: app.path });
-      }}
-    >
-      <mesh>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial map={texture} transparent />
-      </mesh>
-
-      <Text scale={0.1} position={[0, -0.6, 0]} color="white">
-        {name}
-      </Text>
-    </group>
-  );
-};
 export default AppGrid;

@@ -10,8 +10,8 @@ fn toggle_window(app: &AppHandle)  {
     if let Some(window) = app.get_webview_window("main") {
         // Window exists, toggle visibility
         if window.is_visible().unwrap_or(false) {
-            // let _ = window.hide();
-            let _ = window.emit("fade-out", ());
+            let _ = window.hide();
+            // let _ = window.emit("fade-out", ()); // uncomment
             #[cfg(target_os = "macos")]
             unsafe {
                 use cocoa::appkit::{NSApplication, NSApplicationPresentationOptions};
@@ -21,7 +21,7 @@ fn toggle_window(app: &AppHandle)  {
         } else {
             let _ = window.show();
             let _ = window.set_focus();
-            let _ = window.emit("fade-in", ());
+            // let _ = window.emit("fade-in", ()); // uncomment
             #[cfg(target_os = "macos")]
             unsafe {
                 use cocoa::appkit::{NSApplication, NSApplicationPresentationOptions};
@@ -83,10 +83,10 @@ fn toggle_window(app: &AppHandle)  {
                 // Set window level high
                 ns_window.setLevel_(25);
                 
-                // Set collection behavior
-                let behavior = NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces
-                    | NSWindowCollectionBehavior::NSWindowCollectionBehaviorStationary
-                    | NSWindowCollectionBehavior::NSWindowCollectionBehaviorFullScreenAuxiliary;
+                // Set collection behavior - remove CanJoinAllSpaces
+                let behavior = NSWindowCollectionBehavior::NSWindowCollectionBehaviorMoveToActiveSpace
+                | NSWindowCollectionBehavior::NSWindowCollectionBehaviorFullScreenAuxiliary;
+                ns_window.setCollectionBehavior_(behavior);
                 ns_window.setCollectionBehavior_(behavior);
                 
                 // Background color

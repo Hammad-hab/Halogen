@@ -12,7 +12,7 @@ main, body, html {
 
 
 main {
-  opacity: 0;
+  opacity: 1;
   transition: opacity 250ms ease;
 }
 
@@ -26,14 +26,14 @@ main.fade-out {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; filter: blur(10px); }
+  from { opacity: 1; filter: blur(0px); }
   to { opacity: 1; filter: blur(0px); }
 } 
 
 
 @keyframes fadeOut {
   from { opacity: 1; filter: blur(0px); }
-  to { opacity: 0; filter: blur(10px); }
+  to { opacity: 1; filter: blur(0px); }
 } 
 
 .search-bar-container { 
@@ -54,10 +54,10 @@ input#search-bar {
   font-size: 15px;
   backdrop-filter: blur(10px);
   outline: none;
-  border: 1px inset rgba(171, 171, 171, 0.578);
+  border: 1px ridge rgba(171, 171, 171, 0.578);
   background-color: transparent;
   mix-blend-mode: color-burn;
-
+  color: white;
 }
 
 canvas {
