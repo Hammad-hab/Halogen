@@ -12,13 +12,15 @@ main, body, html {
 
 
 main {
-  opacity: 1;
+  opacity: 0;
   transition: opacity 250ms ease;
 }
 
 
 main.fade-in {
   animation: fadeIn 250ms ease forwards;
+  /* background-color: red; */
+  /* background-image: none; */
 }
 
 main.fade-out {
@@ -26,14 +28,14 @@ main.fade-out {
 }
 
 @keyframes fadeIn {
-  from { opacity: 1; filter: blur(0px); }
+  from { opacity: 0; filter: blur(10px); }
   to { opacity: 1; filter: blur(0px); }
 } 
 
 
 @keyframes fadeOut {
   from { opacity: 1; filter: blur(0px); }
-  to { opacity: 1; filter: blur(0px); }
+  to { opacity: 0; filter: blur(10px); }
 } 
 
 .search-bar-container { 

@@ -10,8 +10,8 @@ fn toggle_window(app: &AppHandle)  {
     if let Some(window) = app.get_webview_window("main") {
         // Window exists, toggle visibility
         if window.is_visible().unwrap_or(false) {
-            let _ = window.hide();
-            // let _ = window.emit("fade-out", ()); // uncomment
+            let _ = window.emit("fade-out", ()); // uncomment
+            // let _ = window.hide();
             #[cfg(target_os = "macos")]
             unsafe {
                 use cocoa::appkit::{NSApplication, NSApplicationPresentationOptions};
@@ -21,7 +21,7 @@ fn toggle_window(app: &AppHandle)  {
         } else {
             let _ = window.show();
             let _ = window.set_focus();
-            // let _ = window.emit("fade-in", ()); // uncomment
+            let _ = window.emit("fade-in", ()); // uncomment
             #[cfg(target_os = "macos")]
             unsafe {
                 use cocoa::appkit::{NSApplication, NSApplicationPresentationOptions};
@@ -106,6 +106,7 @@ fn toggle_window(app: &AppHandle)  {
         
         let _ = window.show();
         let _ = window.set_focus();
+        let _ = window.emit("fade-in", ()); // uncomment
 
 
     }

@@ -21,7 +21,8 @@ interface AppSettings {
       disableText: boolean,
     },
     appGrid: {
-      spacing: number,
+      spacingX: number,
+      spacingY: number,
       scrollDamping: number,
       xOffset: number,
       yOffset: number,
@@ -53,7 +54,8 @@ const useAppSettings = create<AppSettingsStore>((set) => ({
       disableText: true,
     },
     appGrid: {
-      spacing: 1.2,
+      spacingX: 1.0,
+      spacingY: 1.2,
       scrollDamping: 0.15,
       xOffset: 0,
       yOffset: -4,

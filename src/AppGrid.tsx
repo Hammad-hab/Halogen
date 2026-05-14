@@ -1,10 +1,11 @@
 import { useAppStore } from "./hooks/AppStore";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ScrollControls, Scroll } from "@react-three/drei";
 
 import AppPlane from "./ui/AppPlane";
 import { useThree } from "@react-three/fiber";
 import { useAppSettings } from "./hooks/useAppSettings";
+import { useGlobalStorage } from "./hooks/GlobalStore";
 
 
 const AppGrid = () => {
@@ -13,23 +14,31 @@ const AppGrid = () => {
   const { appGrid } = settings;
   const entries = useMemo(() => Object.entries(appInfos), [appInfos]);
   const { viewport } = useThree();
+  const global = useGlobalStorage();
 
+  useEffect(() => {
+    if (entries.length > 0) {
+      global.setGlobalProperty("enableRendering", true);
+    }
+  }, [entries.length]);
   const gridConfig = useMemo(() => {
     const count = entries.length;
     const cols = Math.ceil(Math.sqrt(count));
     const rows = Math.ceil(count / cols);
-    const spacing = appGrid.spacing;
+    const spacingX = appGrid.spacingX;
+    const spacingY = appGrid.spacingY;
 
-    return { cols, rows, spacing };
+    return { cols, rows, spacingX, spacingY };
   }, [entries.length]);
 
   const pages = useMemo(() => {
-    const spacing = gridConfig.spacing;
-    const contentHeight = (gridConfig.rows - 1) * spacing;
+    // const spacingX = gridConfig.spacingX; // ?
+    const spacingY = gridConfig.spacingY;
+    const contentHeight = (gridConfig.rows - 1) * spacingY;
   
     // convert world height -> scroll pages
     return Math.max(1.55, contentHeight / viewport.height);
-  }, [gridConfig.rows, gridConfig.spacing, viewport.height]);
+  }, [gridConfig.rows, gridConfig.spacingX, gridConfig.spacingY, viewport.height]);
   
   return (
     <group>
@@ -39,9 +48,8 @@ const AppGrid = () => {
             const col = index % gridConfig.cols;
             const row = Math.floor(index / gridConfig.cols);
 
-            const x = appGrid.xOffset + (col - (gridConfig.cols - 1) / 2) * gridConfig.spacing;
-            const y = appGrid.yOffset + ((gridConfig.rows - 1) / 2 - row) * gridConfig.spacing;
-
+            const x = appGrid.xOffset + (col - (gridConfig.cols - 1) / 2) * gridConfig.spacingX;
+            const y = appGrid.yOffset + ((gridConfig.rows - 1) / 2 - row) * gridConfig.spacingY;
             return (
               <AppPlane
                 key={name}
